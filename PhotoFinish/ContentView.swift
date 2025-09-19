@@ -35,6 +35,7 @@ struct ContentView: View {
                             dragTileIndex = index
                         }
                         .onEnded { value in
+                            handleDragEnded(tileIndex: index, translation: getConstrainedOffset(for: index, translation: value.translation))
                             dragOffset = .zero
                         }
                 )
@@ -112,6 +113,20 @@ struct ContentView: View {
             return CGSize(width: translation.width.clamped(in: -sizePlusSpacing...0), height: 0)
         case .right:
             return CGSize(width: translation.width.clamped(in: 0...sizePlusSpacing), height: 0)
+        }
+    }
+
+    func handleDragEnded(tileIndex: Int, translation: CGSize) {
+        guard let direction = getValidMoveDirection(for: tileIndex) else { return }
+
+        let dragDistance = switch direction {
+        case .up, .down: abs(translation.height)
+        case .left, .right: abs(translation.width)
+        }
+
+        if dragDistance > tileSize * 0.5 {
+            let emptyIndex = images.firstIndex(of: nil)!
+            images.swapAt(tileIndex, emptyIndex)
         }
     }
 }
