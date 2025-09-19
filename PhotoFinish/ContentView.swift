@@ -20,6 +20,7 @@ struct ContentView: View {
                 TileView(tileSize: tileSize, offset: .zero, image: images[index])
             }
         }
+        .onAppear(perform: shuffleTiles)
     }
 
     init(gridSize: Int = 3) {
@@ -32,6 +33,31 @@ struct ContentView: View {
         let startImages = (0..<gridSize*gridSize).dropLast().map { Image(systemName: "\($0).circle") } + [nil]
 
         _images = State(initialValue: startImages)
+    }
+
+    func getAdjacentIndices(for index: Int) -> [Int] {
+        let row = index / gridSize
+        let col = index % gridSize
+
+        var adjacent = [Int]()
+
+        if row > 0 { adjacent.append(index - gridSize) }
+        if row < gridSize - 1 { adjacent.append(index + gridSize) }
+        if col > 0 { adjacent.append(index - 1) }
+        if col < gridSize - 1 { adjacent.append(index + 1) }
+
+        return adjacent
+    }
+
+    func shuffleTiles() {
+        for _ in 0..<1000 {
+            let emptyIndex = images.firstIndex(of: nil)!
+            let possibleMoves = getAdjacentIndices(for: emptyIndex)
+
+            if let randomMove = possibleMoves.randomElement() {
+                images.swapAt(emptyIndex, randomMove)
+            }
+        }
     }
 }
 
