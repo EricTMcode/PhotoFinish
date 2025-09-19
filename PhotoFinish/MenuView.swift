@@ -33,6 +33,16 @@ struct MenuView: View {
                 }
             }
             .navigationTitle("PhotoFinish")
+            .onChange(of: selectedItem) {
+                Task {
+                    guard let data = try await selectedItem?.loadTransferable(type: Data.self) else { return }
+                    selectedImage = UIImage(data: data)
+                    splitImageIntoGrid(gridSize: gridSize)
+                }
+            }
+            .onChange(of: gridSize) {
+                splitImageIntoGrid(gridSize: gridSize)
+            }
         }
     }
 
@@ -48,6 +58,30 @@ struct MenuView: View {
         }
 
         return UIImage(cgImage: cgImage)
+    }
+
+    func splitImageIntoGrid(gridSize: Int) {
+        guard let selectedImage else { return }
+
+        let squareImage = cropToSquare(selectedImage)
+        let pieceSize = squareImage.size.width / Double(gridSize)
+
+        var pieces = [Image]()
+
+        for row in 0..<gridSize {
+            for col in 0..<gridSize {
+                let x = Double(col) * pieceSize
+                let y = Double(row) * pieceSize
+                let rect = CGRect(x: x, y: y, width: pieceSize, height: pieceSize)
+
+                if let cgImage = squareImage.cgImage?.cropping(to: rect) {
+                    let pieceImage = UIImage(cgImage: cgImage)
+                    pieces.append(Image(uiImage: pieceImage))
+                }
+            }
+        }
+
+        gridImages = pieces
     }
 }
 
