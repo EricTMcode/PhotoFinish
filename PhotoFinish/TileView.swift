@@ -8,11 +8,21 @@
 import SwiftUI
 
 struct TileView: View {
+    var tileSize: Double
+    var offset: CGSize
+    var image: Image?
     var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+        if let image {
+            image
+                .resizable()
+                .frame(width: tileSize, height: tileSize)
+                .offset(offset)
+        } else {
+            Color.clear
+        }
     }
 }
 
 #Preview {
-    TileView()
+    TileView(tileSize: 60, offset: .zero, image: Image(systemName: "1.circle"))
 }
