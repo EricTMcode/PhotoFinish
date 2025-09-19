@@ -8,16 +8,36 @@
 import SwiftUI
 
 struct ContentView: View {
+    enum MoveDirection {
+        case up, down, left, right
+    }
+
     var gridSize: Int
     var tileSize: Double
     var columns: [GridItem]
 
     @State private var images: [Image?]
+    @State private var dragOffset = CGSize.zero
+    @State private var dragTileIndex: Int? = nil
 
     var body: some View {
         LazyVGrid(columns: columns, spacing: 2) {
             ForEach(0..<gridSize * gridSize, id: \.self) { index in
-                TileView(tileSize: tileSize, offset: .zero, image: images[index])
+                TileView(
+                    tileSize: tileSize,
+                    offset: dragTileIndex == index ? dragOffset : .zero,
+                    image: images[index]
+                )
+                .gesture(
+                    DragGesture(minimumDistance: 0)
+                        .onChanged{ value in
+                            dragOffset = value.translation
+                            dragTileIndex = index
+                        }
+                        .onEnded { value in
+                            dragOffset = .zero
+                        }
+                )
             }
         }
         .onAppear(perform: shuffleTiles)
@@ -59,8 +79,36 @@ struct ContentView: View {
             }
         }
     }
+
+    func getValidMoveDirection(for tileIndex: Int) -> MoveDirection? {
+        let emptyIndex = images.firstIndex(of: nil)!
+        let adjacentToEmpty = getAdjacentIndices(for: emptyIndex)
+
+        guard adjacentToEmpty.contains(tileIndex) else { return nil }
+
+        let tileRow = tileIndex / gridSize
+        let tileCol = tileIndex % gridSize
+        let emptyRow = emptyIndex / gridSize
+        let emptyCol = emptyIndex % gridSize
+
+        if tileRow == emptyRow {
+            return tileCol < emptyCol ? .right : .left
+        } else {
+            return tileRow < emptyRow ? .down : .up
+        }
+    }
+
+    func getConstrainedOffset(for tileIndex: Int, translation: CGSize) -> CGSize {
+        guard let direction = getValidMoveDirection(for: tileIndex) else { return .zero }
+    }
 }
 
 #Preview {
     ContentView()
+}
+
+extension BinaryFloatingPoint {
+    func clamped(in range: ClosedRange<Self>) -> Self {
+        Swift.max(range.lowerBound, Swift.min(self, range.upperBound))
+    }
 }
