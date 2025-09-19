@@ -31,7 +31,7 @@ struct ContentView: View {
                 .gesture(
                     DragGesture(minimumDistance: 0)
                         .onChanged{ value in
-                            dragOffset = value.translation
+                            dragOffset = getConstrainedOffset(for: index, translation: value.translation)
                             dragTileIndex = index
                         }
                         .onEnded { value in
@@ -100,6 +100,19 @@ struct ContentView: View {
 
     func getConstrainedOffset(for tileIndex: Int, translation: CGSize) -> CGSize {
         guard let direction = getValidMoveDirection(for: tileIndex) else { return .zero }
+
+        let sizePlusSpacing = tileSize + 2
+
+        switch direction {
+        case .up:
+            return CGSize(width: 0, height: translation.height.clamped(in: -sizePlusSpacing...0))
+        case .down:
+            return CGSize(width: 0, height: translation.height.clamped(in: 0...sizePlusSpacing))
+        case .left:
+            return CGSize(width: translation.width.clamped(in: -sizePlusSpacing...0), height: 0)
+        case .right:
+            return CGSize(width: translation.width.clamped(in: 0...sizePlusSpacing), height: 0)
+        }
     }
 }
 
@@ -107,8 +120,4 @@ struct ContentView: View {
     ContentView()
 }
 
-extension BinaryFloatingPoint {
-    func clamped(in range: ClosedRange<Self>) -> Self {
-        Swift.max(range.lowerBound, Swift.min(self, range.upperBound))
-    }
-}
+
