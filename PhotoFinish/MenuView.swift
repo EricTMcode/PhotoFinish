@@ -33,6 +33,9 @@ struct MenuView: View {
                 }
             }
             .navigationTitle("PhotoFinish")
+            .navigationDestination(for: Bool.self) { _ in
+                ContentView(gridSize: gridSize, images: gridImages.dropLast() + [nil])
+            }
             .onChange(of: selectedItem) {
                 Task {
                     guard let data = try await selectedItem?.loadTransferable(type: Data.self) else { return }

@@ -20,40 +20,58 @@ struct ContentView: View {
     @State private var dragOffset = CGSize.zero
     @State private var dragTileIndex: Int? = nil
 
+    @State private var moves = 0
+    var correctLayout: [Image?]
+
+    var isGameWon: Bool {
+        correctLayout == images
+    }
+
     var body: some View {
-        LazyVGrid(columns: columns, spacing: 2) {
-            ForEach(0..<gridSize * gridSize, id: \.self) { index in
-                TileView(
-                    tileSize: tileSize,
-                    offset: dragTileIndex == index ? dragOffset : .zero,
-                    image: images[index]
-                )
-                .gesture(
-                    DragGesture(minimumDistance: 0)
-                        .onChanged{ value in
-                            dragOffset = getConstrainedOffset(for: index, translation: value.translation)
-                            dragTileIndex = index
-                        }
-                        .onEnded { value in
-                            handleDragEnded(tileIndex: index, translation: getConstrainedOffset(for: index, translation: value.translation))
-                            dragOffset = .zero
-                        }
-                )
+        VStack {
+            LazyVGrid(columns: columns, spacing: 2) {
+                ForEach(0..<gridSize * gridSize, id: \.self) { index in
+                    TileView(
+                        tileSize: tileSize,
+                        offset: dragTileIndex == index ? dragOffset : .zero,
+                        image: images[index]
+                    )
+                    .gesture(
+                        DragGesture(minimumDistance: 0)
+                            .onChanged{ value in
+                                dragOffset = getConstrainedOffset(for: index, translation: value.translation)
+                                dragTileIndex = index
+                            }
+                            .onEnded { value in
+                                handleDragEnded(tileIndex: index, translation: getConstrainedOffset(for: index, translation: value.translation))
+                                dragOffset = .zero
+                            }
+                    )
+                }
+            }
+
+            if isGameWon {
+                Text("You Won!")
+                    .font(.largeTitle)
+                    .foregroundStyle(.green)
+                    .bold()
             }
         }
         .onAppear(perform: shuffleTiles)
+        .navigationTitle("Moves: \(moves)")
+        .navigationBarTitleDisplayMode(.inline)
     }
 
-    init(gridSize: Int = 3) {
+    init(gridSize: Int, images: [Image?]) {
         self.gridSize = gridSize
 
         tileSize = 350 / Double(gridSize)
 
         columns = Array(repeating: GridItem(.fixed(tileSize), spacing: 2), count: gridSize)
 
-        let startImages = (0..<gridSize*gridSize).dropLast().map { Image(systemName: "\($0).circle") } + [nil]
+        _images = State(initialValue: images)
 
-        _images = State(initialValue: startImages)
+        correctLayout = images
     }
 
     func getAdjacentIndices(for index: Int) -> [Int] {
@@ -127,12 +145,18 @@ struct ContentView: View {
         if dragDistance > tileSize * 0.5 {
             let emptyIndex = images.firstIndex(of: nil)!
             images.swapAt(tileIndex, emptyIndex)
+
+            moves += 1
         }
     }
 }
 
 #Preview {
-    ContentView()
+    let gridSize = 3
+    let startImages = (0..<gridSize*gridSize).dropLast().map { Image(systemName: "\($0).circle") } + [nil]
+
+
+    ContentView(gridSize: 3, images: startImages)
 }
 
 
